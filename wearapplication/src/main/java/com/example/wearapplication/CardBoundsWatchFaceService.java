@@ -92,10 +92,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
         return new Engine();
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine implements
-            GoogleApiClient.ConnectionCallbacks,
-            GoogleApiClient.OnConnectionFailedListener,
-            ResultCallback<DailyTotalResult> {
+    private class Engine extends CanvasWatchFaceService.Engine {
 
         private static final int BACKGROUND_COLOR = Color.BLACK;
         private static final int TEXT_HOURS_MINS_COLOR = Color.WHITE;
@@ -173,7 +170,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
         /*
          * Google API Client used to make Google Fit requests for step data.
          */
-        private GoogleApiClient mGoogleApiClient;
+       // private GoogleApiClient mGoogleApiClient;
 
         private boolean mDistanceRequested;
 
@@ -186,17 +183,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             super.onCreate(holder);
 
             mDistanceRequested = false;
-            mGoogleApiClient = new GoogleApiClient.Builder(CardBoundsWatchFaceService.this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(Fitness.HISTORY_API)
-                    .addApi(Fitness.RECORDING_API)
-                    .addScope(new Scope(Scopes.FITNESS_LOCATION_READ))
-                    // When user has multiple accounts, useDefaultAccount() allows Google Fit to
-                    // associated with the main account for steps. It also replaces the need for
-                    // a scope request.
-                    .useDefaultAccount()
-                    .build();
+
 
             setWatchFaceStyle(new WatchFaceStyle.Builder(CardBoundsWatchFaceService.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
@@ -247,7 +234,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             super.onVisibilityChanged(visible);
 
             if (visible) {
-                mGoogleApiClient.connect();
+              //  mGoogleApiClient.connect();
 
                 registerReceiver();
 
@@ -256,9 +243,6 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             } else {
                 unregisterReceiver();
 
-                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    mGoogleApiClient.disconnect();
-                }
             }
 
             // Whether the timer should be running depends on whether we're visible (as well as
@@ -334,7 +318,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
         public void onTimeTick() {
             super.onTimeTick();
             Log.d(TAG, "onTimeTick: ambient = " + isInAmbientMode());
-            getTotalDistance();
+            updateData();
             invalidate();
         }
 
@@ -438,6 +422,8 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             if (shouldUpdateTimeHandlerBeRunning()) {
                 mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
             }
+
+            updateData();
         }
 
         /**
@@ -448,90 +434,13 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             return isVisible() && !isInAmbientMode();
         }
 
-        private void getTotalDistance() {
 
-            Log.d(TAG, "getTotalDistance()");
-
-            if ((mGoogleApiClient != null)
-                    && (mGoogleApiClient.isConnected())
-                    && (!mDistanceRequested)) {
-
-                mDistanceRequested = true;
-
-                PendingResult<DailyTotalResult> distanceResult =
-                        Fitness.HistoryApi.readDailyTotal(
-                                mGoogleApiClient,
-                                DataType.TYPE_DISTANCE_DELTA);
-
-                distanceResult.setResultCallback(this);
-            }
-        }
-
-        @Override
-        public void onConnected(Bundle connectionHint) {
-            Log.d(TAG, "mGoogleApiAndFitCallbacks.onConnected: " + connectionHint);
+        public void updateData() {
 
             mDistanceRequested = false;
+            mDistanceTotal = 3;
+            Log.d(TAG, "distance updated: " + mDistanceTotal);
 
-            // Subscribe covers devices that do not have Google Fit installed.
-            subscribeToDistance();
-
-            getTotalDistance();
-        }
-
-        /*
-         * Subscribes to distance.
-         */
-        private void subscribeToDistance() {
-
-            if ((mGoogleApiClient != null) && (mGoogleApiClient.isConnecting())) {
-
-                Fitness.RecordingApi.subscribe(mGoogleApiClient, DataType.TYPE_DISTANCE_DELTA)
-                        .setResultCallback(new ResultCallback<Status>() {
-                            @Override
-                            public void onResult(Status status) {
-                                if (status.isSuccess()) {
-                                    if (status.getStatusCode()
-                                            == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
-                                        Log.i(TAG, "Existing subscription for activity detected.");
-                                    } else {
-                                        Log.i(TAG, "Successfully subscribed!");
-                                    }
-                                } else {
-                                    Log.i(TAG, "There was a problem subscribing.");
-                                }
-                            }
-                        });
-            }
-        }
-
-        @Override
-        public void onConnectionSuspended(int cause) {
-            Log.d(TAG, "mGoogleApiAndFitCallbacks.onConnectionSuspended: " + cause);
-        }
-
-        @Override
-        public void onConnectionFailed(ConnectionResult result) {
-            Log.d(TAG, "mGoogleApiAndFitCallbacks.onConnectionFailed: " + result);
-        }
-
-        @Override
-        public void onResult(DailyTotalResult dailyTotalResult) {
-            Log.d(TAG, "mGoogleApiAndFitCallbacks.onResult(): " + dailyTotalResult);
-
-            mDistanceRequested = false;
-
-            if (dailyTotalResult.getStatus().isSuccess()) {
-
-                List<DataPoint> points = dailyTotalResult.getTotal().getDataPoints();
-
-                if (!points.isEmpty()) {
-                    mDistanceTotal = points.get(0).getValue(Field.FIELD_DISTANCE).asFloat();
-                    Log.d(TAG, "distance updated: " + mDistanceTotal);
-                }
-            } else {
-                Log.e(TAG, "onResult() failed! " + dailyTotalResult.getStatus().getStatusMessage());
-            }
         }
     }
 }
