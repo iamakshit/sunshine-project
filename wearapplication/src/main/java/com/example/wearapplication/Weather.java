@@ -60,4 +60,16 @@ public class Weather {
     public void setCityName(String cityName) {
         this.cityName = cityName;
     }
+
+    @Override
+    public String toString() {
+        return "Weather{" +
+                "high=" + high +
+                ", low=" + low +
+                ", cityName='" + cityName + '\'' +
+                ", cityLatitude=" + cityLatitude +
+                ", cityLongitude=" + cityLongitude +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

@@ -27,6 +27,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -51,9 +53,16 @@ import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,7 +84,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
 
-    private static final String TAG = "DistanceWatchFace";
+    private static final String TAG = "CardBoundsWatchFaceService";
 
     private static final Typeface BOLD_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -441,6 +450,30 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             mDistanceTotal = 3;
             Log.d(TAG, "distance updated: " + mDistanceTotal);
 
+            Weather weather = new Weather();
+            FetchWeatherTask task;
+            task = new FetchWeatherTask(getApplicationContext());
+            int corePoolSize = 60;
+            int maximumPoolSize = 80;
+            int keepAliveTime = 10;
+            BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>(maximumPoolSize);
+            Executor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"110052");
+            else
+                task.execute("110052");
+
+            try {
+                weather = task.get();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+           // Log.i(TAG,"")
+            mDistanceTotal = (float) weather.getHigh();
         }
     }
 }
