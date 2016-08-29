@@ -53,8 +53,10 @@ import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
@@ -103,7 +105,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
 
     private class Engine extends CanvasWatchFaceService.Engine {
 
-        private static final int BACKGROUND_COLOR = Color.BLACK;
+        private static final int BACKGROUND_COLOR = Color.BLUE;
         private static final int TEXT_HOURS_MINS_COLOR = Color.WHITE;
         private static final int TEXT_SECONDS_COLOR = Color.GRAY;
         private static final int TEXT_AM_PM_COLOR = Color.GRAY;
@@ -411,6 +413,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
 
             // Only render distance if there is no peek card, so they do not bleed into each other
             // in ambient mode.
+
             if (getPeekCardPosition().isEmpty()) {
                 canvas.drawText(
                         getString(R.string.fit_distance, mDistanceTotal),
@@ -443,6 +446,22 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             return isVisible() && !isInAmbientMode();
         }
 
+
+        private String getCurrentDay()
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
+            Date d = new Date();
+            String dayOfTheWeek = sdf.format(d);
+            return dayOfTheWeek;
+        }
+
+        private String getCurrentDate()
+        {
+            Calendar c = Calendar.getInstance();
+            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+            String formattedDate = df.format(c.getTime());
+            return formattedDate;
+        }
 
         public void updateData() {
 
