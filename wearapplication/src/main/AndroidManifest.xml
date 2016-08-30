@@ -14,7 +14,7 @@
         android:theme="@android:style/Theme.DeviceDefault">
 
         <service
-            android:name=".CardBoundsWatchFaceService"
+            android:name=".WeatherCardWatchFaceService"
             android:label="@string/fit_distance_name"
             android:permission="android.permission.BIND_WALLPAPER" >
             <meta-data

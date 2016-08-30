@@ -39,26 +39,9 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.fitness.Fitness;
-import com.google.android.gms.fitness.FitnessStatusCodes;
-import com.google.android.gms.fitness.data.DataPoint;
-import com.google.android.gms.fitness.data.DataType;
-import com.google.android.gms.fitness.data.Field;
-import com.google.android.gms.fitness.result.DailyTotalResult;
-
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -84,9 +67,9 @@ import java.util.concurrent.TimeUnit;
  * On devices with low-bit ambient mode, the text is drawn without anti-aliasing. On devices which
  * require burn-in protection, the hours are drawn in normal rather than bold.
  */
-public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
+public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
 
-    private static final String TAG = "CardBoundsWatchFaceService";
+    private static final String TAG = "WeatherCardWFService";
 
     private static final Typeface BOLD_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -105,7 +88,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
 
     private class Engine extends CanvasWatchFaceService.Engine {
 
-        private static final int BACKGROUND_COLOR = Color.BLUE;
+        private  final int BACKGROUND_COLOR = Color.rgb(135,206,250);
         private static final int TEXT_HOURS_MINS_COLOR = Color.WHITE;
         private static final int TEXT_SECONDS_COLOR = Color.GRAY;
         private static final int TEXT_AM_PM_COLOR = Color.GRAY;
@@ -185,7 +168,9 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
 
         private boolean mDistanceRequested;
 
-        private float mDistanceTotal = 0;
+        private float mTempHigh = 0;
+        private float mTempLow = 0;
+        private String time;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -196,7 +181,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             mDistanceRequested = false;
 
 
-            setWatchFaceStyle(new WatchFaceStyle.Builder(CardBoundsWatchFaceService.this)
+            setWatchFaceStyle(new WatchFaceStyle.Builder(WeatherCardWatchFaceService.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false)
@@ -268,7 +253,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             }
             mRegisteredReceiver = true;
             IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            CardBoundsWatchFaceService.this.registerReceiver(mReceiver, filter);
+            WeatherCardWatchFaceService.this.registerReceiver(mReceiver, filter);
         }
 
         private void unregisterReceiver() {
@@ -276,7 +261,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
                 return;
             }
             mRegisteredReceiver = false;
-            CardBoundsWatchFaceService.this.unregisterReceiver(mReceiver);
+            WeatherCardWatchFaceService.this.unregisterReceiver(mReceiver);
         }
 
         @Override
@@ -286,7 +271,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             super.onApplyWindowInsets(insets);
 
             // Load resources that have alternate values for round watches.
-            Resources resources = CardBoundsWatchFaceService.this.getResources();
+            Resources resources = WeatherCardWatchFaceService.this.getResources();
             boolean isRound = insets.isRound();
             mXOffset = resources.getDimension(isRound
                     ? R.dimen.fit_x_offset_round : R.dimen.fit_x_offset);
@@ -367,7 +352,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
-            boolean is24Hour = DateFormat.is24HourFormat(CardBoundsWatchFaceService.this);
+            boolean is24Hour = DateFormat.is24HourFormat(WeatherCardWatchFaceService.this);
 
             // Draw the background.
             canvas.drawColor(BACKGROUND_COLOR);
@@ -415,10 +400,19 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             // in ambient mode.
 
             if (getPeekCardPosition().isEmpty()) {
-                canvas.drawText(
-                        getString(R.string.fit_distance, mDistanceTotal),
-                        mXDistanceOffset,
+                if(time ==null)
+                {
+                    time = getCurrentDay()+ getCurrentDate();
+                }
+                canvas.drawText(time,mXDistanceOffset,
                         mYOffset + mLineHeight,
+                        mDistanceCountPaint
+                );
+
+               String text= mTempHigh+"° "+mTempLow+"° ";
+                canvas.drawText(text,
+                        mXDistanceOffset,
+                        mYOffset + mLineHeight+40,
                         mDistanceCountPaint);
             }
         }
@@ -452,7 +446,7 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
             Date d = new Date();
             String dayOfTheWeek = sdf.format(d);
-            return dayOfTheWeek;
+            return dayOfTheWeek.substring(0,3)+", ";
         }
 
         private String getCurrentDate()
@@ -464,10 +458,11 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
         }
 
         public void updateData() {
-
+            time = getCurrentDay()+getCurrentDate();
+            Log.i(TAG, "time: " + time);
             mDistanceRequested = false;
-            mDistanceTotal = 3;
-            Log.d(TAG, "distance updated: " + mDistanceTotal);
+           // mTempHigh = 3;
+          //  Log.d(TAG, "distance updated: " + mTempHigh);
 
             Weather weather = new Weather();
             FetchWeatherTask task;
@@ -492,7 +487,9 @@ public class CardBoundsWatchFaceService extends CanvasWatchFaceService {
                 e.printStackTrace();
             }
            // Log.i(TAG,"")
-            mDistanceTotal = (float) weather.getHigh();
+            mTempHigh = (float) weather.getHigh();
+            mTempLow = (float) weather.getLow();
+
         }
     }
 }
