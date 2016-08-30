@@ -56,6 +56,8 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
 
     private static final String TAG = "WeatherCardWFService";
     private static final double SCALE_FACTOR = .5;
+    private static final String LOCATION_PINCODE = "110052";
+    private static  int imageDrawable = R.drawable.art_clear;
     private static final Typeface BOLD_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
     private static final Typeface NORMAL_TYPEFACE =
@@ -145,11 +147,6 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
          * disable anti-aliasing in ambient mode.
          */
         private boolean mLowBitAmbient;
-
-        /*
-         * Google API Client used to make Google Fit requests for step data.
-         */
-        // private GoogleApiClient mGoogleApiClient;
 
         private boolean mDistanceRequested;
 
@@ -403,13 +400,13 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
                         mDistanceCountPaint);
 
 
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.art_clear);
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), imageDrawable);
 
                 bitmap = Bitmap.createScaledBitmap(bitmap,
                         (int) (bitmap.getWidth() * SCALE_FACTOR),
                         (int) (bitmap.getHeight() * SCALE_FACTOR), true);
 
-                canvas.drawBitmap(bitmap, mXDistanceOffset, mYOffset + mLineHeight, mBackgroundPaint);
+                canvas.drawBitmap(bitmap, mXDistanceOffset +60 , mYOffset + mLineHeight + 70, mBackgroundPaint);
 
             }
         }
@@ -439,10 +436,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
 
         public void updateData() {
             time = Utils.getCurrentDay() + Utils.getCurrentDate();
-            Log.i(TAG, "time: " + time);
             mDistanceRequested = false;
-            // mTempHigh = 3;
-            //  Log.d(TAG, "distance updated: " + mTempHigh);
 
             Weather weather = new Weather();
             FetchWeatherTask task;
@@ -454,9 +448,9 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             Executor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "110052");
+                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, LOCATION_PINCODE);
             else
-                task.execute("110052");
+                task.execute(LOCATION_PINCODE);
 
             try {
                 weather = task.get();
@@ -469,7 +463,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             // Log.i(TAG,"")
             mTempHigh = (float) weather.getHigh();
             mTempLow = (float) weather.getLow();
-
+            imageDrawable = Utils.getArtResourceForWeatherCondition(weather.getWeatherId());
         }
     }
 }

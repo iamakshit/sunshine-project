@@ -11,16 +11,14 @@ import java.util.Date;
  */
 
 public class Utils {
-    public static String getCurrentDay()
-    {
+    public static String getCurrentDay() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
         Date d = new Date();
         String dayOfTheWeek = sdf.format(d);
-        return dayOfTheWeek.substring(0,3)+", ";
+        return dayOfTheWeek.substring(0, 3) + ", ";
     }
 
-    public static String getCurrentDate()
-    {
+    public static String getCurrentDate() {
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
         String formattedDate = df.format(c.getTime());

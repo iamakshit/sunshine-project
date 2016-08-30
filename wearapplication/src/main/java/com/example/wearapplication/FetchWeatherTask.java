@@ -1,6 +1,5 @@
 package com.example.wearapplication;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -17,7 +16,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Vector;
 
 /**
  * Created by akshitgupta on 29/08/16.
@@ -29,12 +27,11 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
     private final Context mContext;
+    private boolean DEBUG = true;
 
     public FetchWeatherTask(Context context) {
         mContext = context;
     }
-
-    private boolean DEBUG = true;
 
     private Weather getWeatherDataFromJson(String forecastJsonStr)
             throws JSONException {
@@ -88,7 +85,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
             // now we work exclusively in UTC
             dayTime = new Time();
 
-            for(int i = 0; i < weatherArray.length(); i++) {
+            for (int i = 0; i < weatherArray.length(); i++) {
                 // These are the values that will be collected.
                 long dateTime;
                 double pressure;
@@ -106,7 +103,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
                 JSONObject dayForecast = weatherArray.getJSONObject(i);
 
                 // Cheating to convert this to UTC time, which is what we want anyhow
-                dateTime = dayTime.setJulianDay(julianStartDay+i);
+                dateTime = dayTime.setJulianDay(julianStartDay + i);
 
                 // Description is in a child array called "weather", which is 1 element long.
                 // That element also contains a weather code.
@@ -207,7 +204,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
                 return null;
             }
             forecastJsonStr = buffer.toString();
-           Weather weather= getWeatherDataFromJson(forecastJsonStr);
+            Weather weather = getWeatherDataFromJson(forecastJsonStr);
             return weather;
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
@@ -232,7 +229,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
     }
 
     protected void onPostExecute(Weather weather) {
-        Log.i(LOG_TAG, "Weather = "+weather);
+        Log.i(LOG_TAG, "Weather = " + weather);
     }
 
 }
