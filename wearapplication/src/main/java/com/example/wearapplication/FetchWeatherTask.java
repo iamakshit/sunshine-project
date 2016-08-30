@@ -25,7 +25,7 @@ import java.util.Vector;
 
 public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
 
-    private static final String API_KEY = "<INSERT-API-KEY-HERE>";
+    private static final String API_KEY = "f4a6312a0459542973769c10abf61c7c";
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
     private final Context mContext;
@@ -121,6 +121,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
                 high = temperatureObject.getDouble(OWM_MAX);
                 low = temperatureObject.getDouble(OWM_MIN);
 
+                weather.setWeatherId(weatherId);
                 weather.setHigh(high);
                 weather.setLow(low);
                 weather.setCityLatitude(cityLatitude);

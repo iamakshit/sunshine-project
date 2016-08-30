@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -39,9 +41,9 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
-import java.text.SimpleDateFormat;
+import com.example.wearapplication.Utils.Utils;
+
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -50,27 +52,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Displays the user's daily distance total via Google Fit. Distance is polled initially when the
- * Google API Client successfully connects and once a minute after that via the onTimeTick callback.
- * If you want more frequent updates, you will want to add your own  Handler.
- * <p>
- * Authentication IS a requirement to request distance from Google Fit on Wear. Otherwise, distance
- * will always come back as zero (or stay at whatever the distance was prior to you
- * de-authorizing watchface). To authenticate and communicate with Google Fit, you must create a
- * project in the Google Developers Console, activate the Fitness API, create an OAuth 2.0
- * client ID, and register the public certificate from your app's signed APK. More details can be
- * found here: https://developers.google.com/fit/android/get-started#step_3_enable_the_fitness_api
- * <p>
- * In ambient mode, the seconds are replaced with an AM/PM indicator.
- * <p>
- * On devices with low-bit ambient mode, the text is drawn without anti-aliasing. On devices which
- * require burn-in protection, the hours are drawn in normal rather than bold.
- */
 public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
 
     private static final String TAG = "WeatherCardWFService";
-
+    private static final double SCALE_FACTOR = .5;
     private static final Typeface BOLD_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
     private static final Typeface NORMAL_TYPEFACE =
@@ -87,8 +72,8 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine {
-
-        private  final int BACKGROUND_COLOR = Color.rgb(135,206,250);
+        private Paint mBackgroundPaint;
+        private final int BACKGROUND_COLOR = Color.rgb(135, 206, 250);
         private static final int TEXT_HOURS_MINS_COLOR = Color.WHITE;
         private static final int TEXT_SECONDS_COLOR = Color.GRAY;
         private static final int TEXT_AM_PM_COLOR = Color.GRAY;
@@ -164,7 +149,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
         /*
          * Google API Client used to make Google Fit requests for step data.
          */
-       // private GoogleApiClient mGoogleApiClient;
+        // private GoogleApiClient mGoogleApiClient;
 
         private boolean mDistanceRequested;
 
@@ -180,7 +165,8 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
 
             mDistanceRequested = false;
 
-
+            mBackgroundPaint = new Paint();
+            mBackgroundPaint.setColor(BACKGROUND_COLOR);
             setWatchFaceStyle(new WatchFaceStyle.Builder(WeatherCardWatchFaceService.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
@@ -230,7 +216,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             super.onVisibilityChanged(visible);
 
             if (visible) {
-              //  mGoogleApiClient.connect();
+                //  mGoogleApiClient.connect();
 
                 registerReceiver();
 
@@ -369,6 +355,8 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
                 }
                 hourString = String.valueOf(hour);
             }
+
+
             canvas.drawText(hourString, x, mYOffset, mHourPaint);
             x += mHourPaint.measureText(hourString);
 
@@ -400,20 +388,29 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             // in ambient mode.
 
             if (getPeekCardPosition().isEmpty()) {
-                if(time ==null)
-                {
-                    time = getCurrentDay()+ getCurrentDate();
+                if (time == null) {
+                    time = Utils.getCurrentDay() + Utils.getCurrentDate();
                 }
-                canvas.drawText(time,mXDistanceOffset,
-                        mYOffset + mLineHeight+10,
+                canvas.drawText(time, mXDistanceOffset,
+                        mYOffset + mLineHeight + 10,
                         mDistanceCountPaint
                 );
 
-               String text= mTempHigh+"° "+mTempLow+"° ";
+                String text = mTempHigh + "° " + mTempLow + "° ";
                 canvas.drawText(text,
                         mXDistanceOffset,
-                        mYOffset + mLineHeight+60,
+                        mYOffset + mLineHeight + 60,
                         mDistanceCountPaint);
+
+
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.art_clear);
+
+                bitmap = Bitmap.createScaledBitmap(bitmap,
+                        (int) (bitmap.getWidth() * SCALE_FACTOR),
+                        (int) (bitmap.getHeight() * SCALE_FACTOR), true);
+
+                canvas.drawBitmap(bitmap, mXDistanceOffset, mYOffset + mLineHeight, mBackgroundPaint);
+
             }
         }
 
@@ -440,29 +437,12 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             return isVisible() && !isInAmbientMode();
         }
 
-
-        private String getCurrentDay()
-        {
-            SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
-            Date d = new Date();
-            String dayOfTheWeek = sdf.format(d);
-            return dayOfTheWeek.substring(0,3)+", ";
-        }
-
-        private String getCurrentDate()
-        {
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
-            String formattedDate = df.format(c.getTime());
-            return formattedDate;
-        }
-
         public void updateData() {
-            time = getCurrentDay()+getCurrentDate();
+            time = Utils.getCurrentDay() + Utils.getCurrentDate();
             Log.i(TAG, "time: " + time);
             mDistanceRequested = false;
-           // mTempHigh = 3;
-          //  Log.d(TAG, "distance updated: " + mTempHigh);
+            // mTempHigh = 3;
+            //  Log.d(TAG, "distance updated: " + mTempHigh);
 
             Weather weather = new Weather();
             FetchWeatherTask task;
@@ -474,7 +454,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             Executor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"110052");
+                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "110052");
             else
                 task.execute("110052");
 
@@ -486,7 +466,7 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
-           // Log.i(TAG,"")
+            // Log.i(TAG,"")
             mTempHigh = (float) weather.getHigh();
             mTempLow = (float) weather.getLow();
 

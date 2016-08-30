@@ -6,12 +6,21 @@ package com.example.wearapplication;
 
 public class Weather {
 
+    int weatherId;
     double high;
     double low;
     String cityName;
     double cityLatitude ;
     double cityLongitude;
     String description;
+
+    public int getWeatherId() {
+        return weatherId;
+    }
+
+    public void setWeatherId(int weatherId) {
+        this.weatherId = weatherId;
+    }
 
     public String getDescription() {
         return description;
