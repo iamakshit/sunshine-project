@@ -23,7 +23,7 @@ import java.net.URL;
 
 public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
 
-    private static final String API_KEY = "f4a6312a0459542973769c10abf61c7c";
+    private static final String API_KEY = "<API-KEY>";
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
     private final Context mContext;
