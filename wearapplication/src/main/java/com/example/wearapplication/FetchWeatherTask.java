@@ -25,6 +25,7 @@ import java.util.Vector;
 
 public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
 
+    private static final String API_KEY = "f4a6312a0459542973769c10abf61c7c";
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
     private final Context mContext;
@@ -173,7 +174,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Weather> {
                     .appendQueryParameter(FORMAT_PARAM, format)
                     .appendQueryParameter(UNITS_PARAM, units)
                     .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
-                    .appendQueryParameter(APPID_PARAM, "f4a6312a0459542973769c10abf61c7c")
+                    .appendQueryParameter(APPID_PARAM, API_KEY)
                     .build();
 
             URL url = new URL(builtUri.toString());
