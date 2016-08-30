@@ -3,5 +3,5 @@
     <string name="fit_distance">%1$ , %2$ </string>
     <string name="fit_am">AM</string>
     <string name="fit_pm">PM</string>
-    <string name="fit_distance_name">Abhishek Singh</string>
+    <string name="weather_wf_name">Weather Watch Face</string>
 </resources>

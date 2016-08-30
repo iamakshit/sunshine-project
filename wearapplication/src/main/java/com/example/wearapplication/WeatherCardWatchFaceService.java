@@ -405,14 +405,14 @@ public class WeatherCardWatchFaceService extends CanvasWatchFaceService {
                     time = getCurrentDay()+ getCurrentDate();
                 }
                 canvas.drawText(time,mXDistanceOffset,
-                        mYOffset + mLineHeight,
+                        mYOffset + mLineHeight+10,
                         mDistanceCountPaint
                 );
 
                String text= mTempHigh+"° "+mTempLow+"° ";
                 canvas.drawText(text,
                         mXDistanceOffset,
-                        mYOffset + mLineHeight+40,
+                        mYOffset + mLineHeight+60,
                         mDistanceCountPaint);
             }
         }
